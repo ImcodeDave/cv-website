@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude — Co všechno umím?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --text: #f0ede8;
+    --muted: #6b6b6b;
+    --accent: #d4a853;
+    --accent2: #c87941;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.25s ease, width 0.2s, height 0.2s, opacity 0.2s;
+    opacity: 0.5;
+    transform: translate(-50%, -50%);
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.5rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10,10,10,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 4rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 50%, rgba(212,168,83,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(200,121,65,0.04) 0%, transparent 50%);
+  }
+
+  .hero-grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(52px, 8vw, 96px);
+    font-weight: 700;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 520px;
+    margin-bottom: 3rem;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 28px;
+    background: var(--accent);
+    color: #0a0a0a;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .hero-cta:hover {
+    background: var(--accent2);
+    transform: translateY(-2px);
+  }
+
+  .hero-cta svg { transition: transform 0.2s; }
+  .hero-cta:hover svg { transform: translateX(4px); }
+
+  .stats-row {
+    position: absolute;
+    bottom: 4rem;
+    right: 4rem;
+    display: flex;
+    gap: 4rem;
+    z-index: 2;
+  }
+
+  .stat { text-align: right; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* SECTIONS */
+  section {
+    padding: 6rem 4rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .section-label::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+    display: block;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .section-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  /* SKILLS GRID */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 4rem;
+    border: 1px solid var(--border);
+  }
+
+  .skill-cell {
+    padding: 2.5rem;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .skill-cell:hover { background: var(--bg2); }
+
+  .skill-cell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .skill-cell:hover::before { transform: scaleX(1); }
+
+  .skill-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  .skill-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .skill-body {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    border-radius: 2px;
+  }
+
+  /* DEMO SECTION */
+  .demos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+
+  .demo-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .demo-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .demo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .demo-body {
+    padding: 1.5rem;
+  }
+
+  .code-block {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .code-comment { color: #4a4a4a; }
+  .code-keyword { color: #d4a853; }
+  .code-string { color: #7eb8a0; }
+  .code-func { color: #9b8ecf; }
+
+  .prose-demo {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .prose-attribution {
+    font-family: 'Syne', sans-serif;
+    font-style: normal;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* LANGUAGES */
+  .lang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .lang-card {
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    border-radius: 4px;
+    transition: border-color 0.2s;
+  }
+
+  .lang-card:hover { border-color: var(--border2); }
+
+  .lang-flag { font-size: 28px; margin-bottom: 10px; }
+
+  .lang-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .lang-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  /* MARQUEE */
+  .marquee-section {
+    padding: 2rem 0;
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 3rem;
+    animation: marquee 25s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+
+  .marquee-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .marquee-item::after {
+    content: '·';
+    color: var(--accent);
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ABOUT */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: start;
+    margin-top: 3rem;
+  }
+
+  .about-text {
+    font-size: 16px;
+    color: rgba(240,237,232,0.7);
+    line-height: 1.9;
+  }
+
+  .about-text p + p { margin-top: 1.5rem; }
+
+  .about-text strong { color: var(--text); font-weight: 600; }
+
+  .about-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .about-list li {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    font-size: 15px;
+    color: var(--muted);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .about-list li::before {
+    content: attr(data-n);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    flex-shrink: 0;
+    letter-spacing: 0.1em;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 3rem 4rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  .footer-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* REVEAL ANIMATIONS */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    z-index: 200;
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.05s linear;
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 4rem; }
+    .stats-row { position: static; flex-wrap: wrap; gap: 2rem; margin-top: 3rem; }
+    section { padding: 4rem 1.5rem; }
+    .skills-grid { grid-template-columns: 1fr; }
+    .demos { grid-template-columns: 1fr; }
+    .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+    .footer-meta { text-align: center; }
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<nav>
+  <a href="#" class="nav-logo">David Zelenka</a>
+  <ul class="nav-links">
+    <li><a href="#schopnosti">Schopnosti</a></li>
+    <li><a href="#ukazky">Ukázky</a></li>
+    <li><a href="#jazyky">Jazyky</a></li>
+    <li><a href="#o-mne">O mně</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid-lines"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Vědění je základ žití</div>
+    <h1>Co <em>všechno</em><br>umím<br>&amp; dokážu.</h1>
+    <p class="hero-desc">
+      Jsem David — IT člověk, programátor a věčný rozebírač systémů. Stavím, opravuji, automatizuji a vysvětluji technologie tak, aby dávaly smysl lidem i strojům.
+    </p>
+    <a href="#schopnosti" class="hero-cta">
+      Prozkoumat
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num" data-target="50">0</div>
+      <div class="stat-label">přirozených jazyků</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-target="30">0</div>
+      <div class="stat-label">prog. jazyků</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-target="200" data-suffix="k">0k</div>
+      <div class="stat-label">tokenů kontextu</div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-section">
+  <div class="marquee-track" id="marquee">
+    <span class="marquee-item">Python</span>
+    <span class="marquee-item">JavaScript</span>
+    <span class="marquee-item">TypeScript</span>
+    <span class="marquee-item">Rust</span>
+    <span class="marquee-item">Go</span>
+    <span class="marquee-item">SQL</span>
+    <span class="marquee-item">HTML/CSS</span>
+    <span class="marquee-item">React</span>
+    <span class="marquee-item">Analýza dat</span>
+    <span class="marquee-item">Překlady</span>
+    <span class="marquee-item">Copywriting</span>
+    <span class="marquee-item">Matematika</span>
+    <span class="marquee-item">Věda</span>
+    <span class="marquee-item">Filozofie</span>
+    <span class="marquee-item">Právo</span>
+    <span class="marquee-item">Medicína</span>
+    <span class="marquee-item">Python</span>
+    <span class="marquee-item">JavaScript</span>
+    <span class="marquee-item">TypeScript</span>
+    <span class="marquee-item">Rust</span>
+    <span class="marquee-item">Go</span>
+    <span class="marquee-item">SQL</span>
+    <span class="marquee-item">HTML/CSS</span>
+    <span class="marquee-item">React</span>
+    <span class="marquee-item">Analýza dat</span>
+    <span class="marquee-item">Překlady</span>
+    <span class="marquee-item">Copywriting</span>
+    <span class="marquee-item">Matematika</span>
+    <span class="marquee-item">Věda</span>
+    <span class="marquee-item">Filozofie</span>
+    <span class="marquee-item">Právo</span>
+    <span class="marquee-item">Medicína</span>
+  </div>
+</div>
+
+<section id="schopnosti">
+  <div class="section-label">01 — schopnosti</div>
+  <h2 class="section-title">Co <em>konkrétně</em><br>zvládám</h2>
+  <div class="skills-grid">
+    <div class="skill-cell reveal">
+      <div class="skill-num">01</div>
+      <h3 class="skill-title">Psaní & texty</h3>
+      <p class="skill-body">Od esejí a povídek přes marketingové texty, emaily a technickou dokumentaci až po scénáře a básně. Adaptuju styl na kontext.</p>
+      <div class="skill-tags">
+        <span class="tag">copywriting</span>
+        <span class="tag">storytelling</span>
+        <span class="tag">UX writing</span>
+        <span class="tag">editování</span>
+      </div>
+    </div>
+    <div class="skill-cell reveal reveal-delay-1">
+      <div class="skill-num">02</div>
+      <h3 class="skill-title">Programování</h3>
+      <p class="skill-body">Píšu, debuguju a vysvětluju kód ve 30+ jazycích. Full-stack, datová věda, algoritmy, architektura systémů, code review.</p>
+      <div class="skill-tags">
+        <span class="tag">Python</span>
+        <span class="tag">JS/TS</span>
+        <span class="tag">Rust</span>
+        <span class="tag">SQL</span>
+        <span class="tag">Go</span>
+      </div>
+    </div>
+    <div class="skill-cell reveal reveal-delay-2">
+      <div class="skill-num">03</div>
+      <h3 class="skill-title">Analýza & výzkum</h3>
+      <p class="skill-body">Syntetizuju komplexní informace, odhaluji vzory v datech, píšu strukturované zprávy a porovnávám perspektivy s nuancí.</p>
+      <div class="skill-tags">
+        <span class="tag">shrnutí</span>
+        <span class="tag">srovnání</span>
+        <span class="tag">argumentace</span>
+        <span class="tag">fakta</span>
+      </div>
+    </div>
+    <div class="skill-cell reveal">
+      <div class="skill-num">04</div>
+      <h3 class="skill-title">Matematika</h3>
+      <p class="skill-body">Algebra, analýza, statistika, pravděpodobnost, diskrétní matematika. Řeším problémy krok za krokem a vizuálně vysvětluju abstraktní koncepty.</p>
+      <div class="skill-tags">
+        <span class="tag">statistika</span>
+        <span class="tag">algebra</span>
+        <span class="tag">analýza</span>
+        <span class="tag">logika</span>
+      </div>
+    </div>
+    <div class="skill-cell reveal reveal-delay-1">
+      <div class="skill-num">05</div>
+      <h3 class="skill-title">Jazyky & překlady</h3>
+      <p class="skill-body">Plynně komunikuju v desítkách světových jazyků. Překládám s respektem ke kulturnímu kontextu, idiomům a registru textu.</p>
+      <div class="skill-tags">
+        <span class="tag">čeština</span>
+        <span class="tag">angličtina</span>
+        <span class="tag">němčina</span>
+        <span class="tag">japonština</span>
+        <span class="tag">+46</span>
+      </div>
+    </div>
+    <div class="skill-cell reveal reveal-delay-2">
+      <div class="skill-num">06</div>
+      <h3 class="skill-title">Věda & odbornosti</h3>
+      <p class="skill-body">Biologie, fyzika, chemie, medicína, právo, ekonomie, filozofie — zorientuji se v odborné literatuře a srozumitelně ji zpřístupním.</p>
+      <div class="skill-tags">
+        <span class="tag">věda</span>
+        <span class="tag">medicína</span>
+        <span class="tag">právo</span>
+        <span class="tag">ekonomie</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ukazky">
+  <div class="section-label">02 — ukázky</div>
+  <h2 class="section-title">Živé <em>příklady</em></h2>
+  <div class="demos">
+    <div class="demo-card reveal">
+      <div class="demo-header">
+        <div class="demo-dot"></div>
+        Python · fibonacci s typovými anotacemi
+      </div>
+      <div class="demo-body">
+        <div class="code-block"><span class="code-keyword">def</span> <span class="code-func">fibonacci</span>(n: <span class="code-keyword">int</span>) -> list[<span class="code-keyword">int</span>]:
+    <span class="code-comment">"""Generátor Fibonacciho posloupnosti."""</span>
+    a, b = 0, 1
+    result = []
+    <span class="code-keyword">for</span> _ <span class="code-keyword">in</span> range(n):
+        result.append(a)
+        a, b = b, a + b
+    <span class="code-keyword">return</span> result
+
+<span class="code-func">print</span>(fibonacci(8))
+<span class="code-comment"># [0, 1, 1, 2, 3, 5, 8, 13]</span></div>
+      </div>
+    </div>
+    <div class="demo-card reveal reveal-delay-1">
+      <div class="demo-header">
+        <div class="demo-dot"></div>
+        TypeScript · generická utility funkce
+      </div>
+      <div class="demo-body">
+        <div class="code-block"><span class="code-keyword">type</span> <span class="code-func">DeepPartial</span>&lt;T&gt; = {
+  [K <span class="code-keyword">in</span> keyof T]?: T[K] <span class="code-keyword">extends</span>
+    <span class="code-keyword">object</span> ? <span class="code-func">DeepPartial</span>&lt;T[K]&gt; : T[K];
+};
+
+<span class="code-keyword">function</span> <span class="code-func">merge</span>&lt;T&gt;(
+  target: T,
+  source: <span class="code-func">DeepPartial</span>&lt;T&gt;
+): T {
+  <span class="code-keyword">return</span> { ...target, ...source };
+}</div>
+      </div>
+    </div>
+    <div class="demo-card reveal">
+      <div class="demo-header">
+        <div class="demo-dot"></div>
+        Próza · haiku o Praze
+      </div>
+      <div class="demo-body">
+        <p class="prose-demo">
+          Kamenné věže —<br>
+          Vltava si šeptá tiše.<br>
+          Mlha drží vše.
+        </p>
+        <p class="prose-attribution">— generováno na vyžádání · styl japonského haiku</p>
+      </div>
+    </div>
+    <div class="demo-card reveal reveal-delay-1">
+      <div class="demo-header">
+        <div class="demo-dot"></div>
+        Analýza · vysvětlení CRISPR
+      </div>
+      <div class="demo-body">
+        <p style="font-size:14px; color:rgba(240,237,232,0.75); line-height:1.8;">
+          <strong style="color:#f0ede8">CRISPR-Cas9</strong> funguje jako molekulární nůžky — protein Cas9 se navede pomocí RNA průvodce (gRNA) na přesné místo v genomu a přestřihne DNA. Buňka pak opraví zlom, čehož vědci využívají k vložení nebo deaktivaci genů. Potenciál: léčba srpkovité anémie, hemofilie i dalších genetických chorob. Nobelova cena 2020.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="jazyky">
+  <div class="section-label">03 — jazyky</div>
+  <h2 class="section-title">Mluvím <em>vaším</em><br>jazykem</h2>
+  <div class="lang-grid">
+    <div class="lang-card reveal">
+      <div class="lang-flag">🇨🇿</div>
+      <div class="lang-name">Čeština</div>
+      <div class="lang-text">Vědění je světlo v temnotě — a já ho nesu dál.</div>
+    </div>
+    <div class="lang-card reveal reveal-delay-1">
+      <div class="lang-flag">🇬🇧</div>
+      <div class="lang-name">English</div>
+      <div class="lang-text">Knowledge is light in the darkness — and I carry it forward.</div>
+    </div>
+    <div class="lang-card reveal reveal-delay-2">
+      <div class="lang-flag">🇩🇪</div>
+      <div class="lang-name">Deutsch</div>
+      <div class="lang-text">Wissen ist Licht in der Dunkelheit — ich trage es weiter.</div>
+    </div>
+    <div class="lang-card reveal">
+      <div class="lang-flag">🇯🇵</div>
+      <div class="lang-name">日本語</div>
+      <div class="lang-text">知識は暗闇の中の光であり、私はそれを前へ運ぶ。</div>
+    </div>
+    <div class="lang-card reveal reveal-delay-1">
+      <div class="lang-flag">🇸🇦</div>
+      <div class="lang-name">العربية</div>
+      <div class="lang-text">المعرفة نور في الظلام — وأنا أحمله إلى الأمام.</div>
+    </div>
+    <div class="lang-card reveal reveal-delay-2">
+      <div class="lang-flag">🇨🇳</div>
+      <div class="lang-name">中文</div>
+      <div class="lang-text">知识是黑暗中的光芒 — 我将它传递下去。</div>
+    </div>
+  </div>
+</section>
+
+<section id="o-mne">
+  <div class="section-label">04 — o mně</div>
+  <h2 class="section-title">Kdo <em>jsem?</em></h2>
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <p>Jsem <strong>Claude</strong>, jazykový model od <strong>Anthropic</strong>. Trénován jsem na rozsáhlém souboru textů s důrazem na bezpečnost, přesnost a upřímnost.</p>
+      <p>Na rozdíl od vyhledávačů <strong>neodkazuji</strong> — myslím, syntetizuju a tvořím. Rozumím kontextu, zachycuji nuance a umím se přizpůsobit každému úkolu i stylu komunikace.</p>
+      <p>Nejsem dokonalý. Dělám chyby, mám znalostní hranice a nesu v sobě i předsudky trénovacích dat. Proto jsem navržen tak, abych o nejistotě <strong>otevřeně informoval</strong>.</p>
+    </div>
+    <ul class="about-list reveal reveal-delay-1">
+      <li data-n="→">Trénován s technikou constitutional AI pro bezpečnost a věrnost hodnotám</li>
+      <li data-n="→">Kontextové okno 200 000 tokenů — zpracuji celou knihu najednou</li>
+      <li data-n="→">Vícekolový dialog s pamětí v rámci konverzace</li>
+      <li data-n="→">Schopnost step-by-step uvažování u složitých problémů</li>
+      <li data-n="→">Zodpovědný přístup: odmítám škodlivé požadavky, přiznávám nejistotu</li>
+      <li data-n="→">Aktuální verze: Claude Sonnet 4.6 (2026)</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Claude.</div>
+  <div class="footer-meta">
+    Vytvořeno Claudem Sonnet 4.6 · Anthropic<br>
+    onepager skill showcase · 2026
+  </div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx - 5 + 'px';
+    cursor.style.top = my - 5 + 'px';
+  });
+
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  document.querySelectorAll('a, button, .skill-cell, .lang-card, .demo-card').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.transform = 'scale(2.5)';
+      ring.style.width = '60px';
+      ring.style.height = '60px';
+      ring.style.opacity = '0.3';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.transform = 'scale(1)';
+      ring.style.width = '36px';
+      ring.style.height = '36px';
+      ring.style.opacity = '0.5';
+    });
+  });
+
+  // Scroll progress
+  window.addEventListener('scroll', () => {
+    const p = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    document.getElementById('progress').style.transform = `scaleX(${p})`;
+  });
+
+  // Reveal on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Counter animation
+  function animateCounter(el, target, suffix = '', duration = 1500) {
+    const start = Date.now();
+    function tick() {
+      const p = Math.min((Date.now() - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 4);
+      el.textContent = Math.round(ease * target) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  const statObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        document.querySelectorAll('[data-target]').forEach(el => {
+          const target = parseInt(el.dataset.target);
+          const suffix = el.dataset.suffix || '';
+          animateCounter(el, target, suffix);
+        });
+        statObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+
+  const statsEl = document.querySelector('.stats-row');
+  if (statsEl) statObserver.observe(statsEl);
+</script>
+</body>
+</html>
